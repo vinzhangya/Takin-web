@@ -31,6 +31,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.dom4j.DocumentException;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 /**
@@ -57,6 +58,8 @@ public class ShadowJobConfigService {
     private AgentConfigCacheManager agentConfigCacheManager;
     @Autowired
     private ApplicationService applicationService;
+    @Value("${takin.check.job.unique:true}")
+    private Boolean checkJobUnique;
 
     public static void main(String[] args) throws DocumentException {
         String text = "<xml>\n" +
@@ -86,9 +89,11 @@ public class ShadowJobConfigService {
         BeanUtils.copyProperties(tShadowJobConfig, shadowJobCreateParam);
         WebPluginUtils.fillUserData(shadowJobCreateParam);
         // 重复判断
-        if (applicationShadowJobDAO.exist(shadowJobCreateParam)) {
-            return Response.fail(shadowJobCreateParam.getName() + ",类型为"+
-                JobEnum.getJobByIndex(shadowJobCreateParam.getType()).getText() + "已存在");
+        if(checkJobUnique) {
+            if (applicationShadowJobDAO.exist(shadowJobCreateParam)) {
+                return Response.fail(shadowJobCreateParam.getName() + ",类型为" +
+                        JobEnum.getJobByIndex(shadowJobCreateParam.getType()).getText() + "已存在");
+            }
         }
 
         applicationShadowJobDAO.insert(shadowJobCreateParam);
@@ -142,9 +147,11 @@ public class ShadowJobConfigService {
                 shadowJobCreateParam.setApplicationId(shadowJobConfig.getApplicationId());
                 shadowJobCreateParam.setType(jobText.ordinal());
                 shadowJobCreateParam.setId(shadowJobConfig.getId());
-                if (applicationShadowJobDAO.exist(shadowJobCreateParam)) {
-                    return Response.fail(shadowJobCreateParam.getName() + ",类型为"+
-                        JobEnum.getJobByIndex(shadowJobCreateParam.getType()).getText() + "已存在");
+                if(checkJobUnique) {
+                    if (applicationShadowJobDAO.exist(shadowJobCreateParam)) {
+                        return Response.fail(shadowJobCreateParam.getName() + ",类型为" +
+                                JobEnum.getJobByIndex(shadowJobCreateParam.getType()).getText() + "已存在");
+                    }
                 }
 
                 if (StringUtils.isNotBlank(className) && !className.equals(shadowJobConfig.getName())) {

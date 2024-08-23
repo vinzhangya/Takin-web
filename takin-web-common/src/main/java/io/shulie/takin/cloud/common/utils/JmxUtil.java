@@ -26,6 +26,7 @@ import io.shulie.takin.cloud.ext.content.enums.NodeTypeEnum;
 import io.shulie.takin.cloud.ext.content.enums.SamplerTypeEnum;
 import io.shulie.takin.cloud.ext.content.script.ScriptNode;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
 import org.dom4j.Element;
@@ -39,7 +40,29 @@ import org.dom4j.io.SAXReader;
 public class JmxUtil {
 
     public static void main(String[] args) {
-        System.out.println(JSON.toJSONString(buildNodeTree("/Users/xiaoshu/Desktop/JavaRequestTest2.jmx")));
+        List<ScriptNode> nodeList = buildNodeTree("/Users/xiaoshu/Desktop/报账单据0727.jmx");
+        Map<String, List<String>> dataMap = new HashMap<>();
+        putData(dataMap, nodeList);
+        for(Map.Entry<String, List<String>> entry : dataMap.entrySet()) {
+            System.out.println(entry.getKey());
+            for(String s : entry.getValue()) {
+                System.out.println("   " + s);
+            }
+        }
+    }
+
+    private static void putData(Map<String, List<String>> dataMap, List<ScriptNode> nodeList) {
+        if(CollectionUtils.isEmpty(nodeList)) {
+            return;
+        }
+        for(ScriptNode scriptNode : nodeList) {
+            if(scriptNode.getType() == NodeTypeEnum.CONTROLLER) {
+                if(CollectionUtils.isNotEmpty(scriptNode.getChildren())){
+                    dataMap.put(scriptNode.getTestName(), scriptNode.getChildren().stream().filter(data -> data.getType() == NodeTypeEnum.SAMPLER).map(ScriptNode::getTestName).collect(Collectors.toList()));
+                }
+            }
+            putData(dataMap, scriptNode.getChildren());
+        }
     }
     /**
      * 属性基本元素名称列表

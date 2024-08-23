@@ -867,11 +867,15 @@ public class AppRemoteCallServiceImpl implements AppRemoteCallService {
         if (CollectionUtils.isEmpty(outputs)) {
             return PagingList.empty();
         }
+        int page = input.getCurrent();
+        if(page < 1) {
+            page = 1;
+        }
         //进行物理分页
-        return PagingList.of(outputs.size() < input.getPageSize() ?
-                outputs : outputs.subList(input.getCurrent() * input.getPageSize(),
-                ((input.getCurrent() + 1) * input.getPageSize() > outputs.size() ? (outputs.size() - 1) : ((input.getCurrent() + 1) * input.getPageSize()))),
-            outputs.size());
+        int startSize = (page - 1) * input.getPageSize();
+        int endSize = page * input.getPageSize() <  outputs.size() ? page * input.getPageSize() : outputs.size();
+        return PagingList.of(outputs.size() <= input.getPageSize() ?
+                outputs : outputs.subList(startSize, endSize), outputs.size());
     }
 
     @Override
